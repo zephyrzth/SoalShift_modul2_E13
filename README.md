@@ -6,7 +6,7 @@ Catatan : Tidak boleh menggunakan crontab.
 
 
 Pertama kita harus me-list isi dari folder dengan fungsi dir diatas, jika ada file maka akan masuk ke if, dalam while kita akan meloop untuk setiap file, untuk setiap file namanya dimasukkan ke string x, lalu dicek apakah file tersebut berakhiran .png, jika iya maka akan masuk ke if, lalu memasukkan nama file tersebut ke dalam string y, lalu akan dihapus 4 karakter terakhir, lalu ditambahkan _grey.png dibelakangnya, lalu menambahkan direktori ke depan nama file png tersebut agar muncul di direktori yang sudah ditentukan dengan menggunakan fungsi rename. Saat file didalam folder tersebut sudah habis, maka akan menutup dengan closedir.
-Dalam soal perintahnya adalah untuk secara otomatis, maka menggunakan daemon di setiap detik (sleep(1)) seperti gambar berikut
+Dalam soal perintahnya adalah untuk secara otomatis, maka menggunakan daemon di setiap detik (sleep(1))
   
  
 
@@ -16,7 +16,7 @@ Catatan: Tidak boleh menggunakan crontab
  
 
 Pertama kita mengambil user dan group  menggunakan getpwuid dan get grgid lalu mencocokan apakah itu www-data atau tidak, kalau iya maka masuk if. Dalam if kita menghapus file elen.ku, tapi sebelum itu harus mengubah permission menjadi 777 artinya rwx untuk semua, maka bisa kita hapus.
-Dalam soal ini diperintahkan untuk menjalankan setiap 3 detik, maka akan dimasukkan ke dalam daemon tiap 3 detik (sleep(3)) seperti gambar dibawah ini 
+Dalam soal ini diperintahkan untuk menjalankan setiap 3 detik, maka akan dimasukkan ke dalam daemon tiap 3 detik (sleep(3))
   
 
 3.	Diberikan file campur2.zip. Di dalam file tersebut terdapat folder “campur2”. 
