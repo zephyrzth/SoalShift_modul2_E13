@@ -6,37 +6,229 @@ Soal Shift Modul 2 Praktikum Sistem Operasi
    Catatan : Tidak boleh menggunakan crontab.
    
    Jawab:
+   ```
+   #include <sys/types.h>
+   #include <sys/stat.h>
+   #include <stdio.h>
+   #include <stdlib.h>
+   #include <fcntl.h>
+   #include <errno.h>
+   #include <unistd.h>
+   #include <syslog.h>
+   #include <string.h>
+   #include <dirent.h>
+
+   int main() {
+     pid_t pid, sid;
+     pid = fork();
+
+     if (pid < 0) {
+       exit(EXIT_FAILURE);
+     }
+
+     if (pid > 0) {
+       exit(EXIT_SUCCESS);
+     }
+     umask(0);
+
+     sid = setsid();
+
+     if (sid < 0) {
+       exit(EXIT_FAILURE);
+     }
+
+     if ((chdir("/home/trasv/Timo/Sisop/2")) < 0) {
+       exit(EXIT_FAILURE);
+     }
+
+     close(STDIN_FILENO);
+     close(STDOUT_FILENO);
+     close(STDERR_FILENO);
+
+     while(1) {
+       DIR *d;
+       struct dirent *dir;
+       d = opendir(".");
+       if (d){
+         while ((dir = readdir(d)) != NULL){
+           char x[100], y[100];
+           strcpy(x,dir->d_name);
+           strcat(x,"");
+           if(x[strlen(x)-1] == 'g' && x[strlen(x)-2] == 'n' && x[strlen(x)-3] == 'p' && x[strlen(x)-4] == '.'){
+             strcpy(y,dir->d_name);
+             y[strlen(y)-4]='\0';
+             strcat(y,"_grey.png");
+             char direktori[100]="/home/trasv/Timo/modul2/gambar/";
+             printf("%s\n", direktori);
+             strcat(direktori,y);
+             rename(x,direktori);
+           }
+         }
+       closedir(d);
+       }
+
+     sleep(1);
+     }
+
+     exit(EXIT_SUCCESS);
+   }
+   ```
+   Pertama kita harus me-list isi dari folder dengan variabel bertipe `DIR*` dan `struct dirent*`. Dan dilakukan fungsi `opendir()` yang hasilnya dimasukkan ke variabel bertipe DIR* tadi. Hal ini dilakukan untuk mengecek apakah isi folder ada.
    
-   Pertama kita harus membuat daftar isi dari folder dengan fungsi dir di atas, jika ada file maka akan masuk ke if.
+   Jika ada file, maka akan masuk ke `if()`, dalam `while()` kita akan meloop untuk setiap file, untuk setiap file namanya dimasukkan ke string `x[]`, lalu dicek apakah file tersebut berakhiran `.png`.
    
-   Dalam while kita akan meloop untuk setiap file, untuk setiap file namanya dimasukkan ke string x, lalu dicek apakah file tersebut berakhiran .png, jika iya maka akan masuk ke if, lalu memasukkan nama file tersebut ke dalam string y, lalu akan dihapus 4 karakter terakhir, lalu ditambahkan _grey.png dibelakangnya, lalu menambahkan direktori ke depan nama file png tersebut agar muncul di direktori yang sudah ditentukan dengan menggunakan fungsi rename. Saat file didalam folder tersebut sudah habis, maka akan menutup dengan closedir.
-Dalam soal perintahnya adalah untuk secara otomatis, maka menggunakan daemon di setiap detik (sleep(1))
-  
- 
+   Jika iya maka akan masuk ke `if()`, lalu memasukkan nama file tersebut ke dalam string `y`, lalu akan dihapus 4 karakter terakhir, lalu ditambahkan `_grey.png` dibelakangnya, lalu menambahkan direktori ke depan nama file png tersebut agar muncul di direktori yang sudah ditentukan dengan menggunakan fungsi rename. Saat file didalam folder tersebut sudah habis, maka akan menutup dengan `closedir`.
+   
+   Dalam soal perintahnya adalah untuk secara otomatis, maka menggunakan daemon di setiap detik `sleep(1)`.
 
 2.	Pada suatu hari Kusuma dicampakkan oleh Elen karena Elen dimenangkan oleh orang lain. Semua kenangan tentang Elen berada pada file bernama “elen.ku” pada direktori “hatiku”. Karena sedih berkepanjangan, tugas kalian sebagai teman Kusuma adalah membantunya untuk menghapus semua kenangan tentang Elen dengan membuat program C yang bisa mendeteksi owner dan group dan menghapus file “elen.ku” setiap 3 detik dengan syarat ketika owner dan grupnya menjadi “www-data”. Ternyata kamu memiliki kendala karena permission pada file “elen.ku”. Jadi, ubahlah permissionnya menjadi 777. Setelah kenangan tentang Elen terhapus, maka Kusuma bisa move on.
-Catatan: Tidak boleh menggunakan crontab
 
- 
+   Catatan: Tidak boleh menggunakan crontab
+   
+   Jawab:
+   ```
+   #include <sys/types.h>
+   #include <sys/stat.h>
+   #include <stdio.h>
+   #include <stdlib.h>
+   #include <fcntl.h>
+   #include <errno.h>
+   #include <unistd.h>
+   #include <syslog.h>
+   #include <string.h>
+   #include <grp.h>
+   #include <pwd.h>
 
-Pertama kita mengambil user dan group  menggunakan getpwuid dan get grgid lalu mencocokan apakah itu www-data atau tidak, kalau iya maka masuk if. Dalam if kita menghapus file elen.ku, tapi sebelum itu harus mengubah permission menjadi 777 artinya rwx untuk semua, maka bisa kita hapus.
-Dalam soal ini diperintahkan untuk menjalankan setiap 3 detik, maka akan dimasukkan ke dalam daemon tiap 3 detik (sleep(3))
-  
+
+   int main() {
+     pid_t pid, sid;
+
+     pid = fork();
+
+     if (pid < 0) {
+       exit(EXIT_FAILURE);
+     }
+
+     if (pid > 0) {
+       exit(EXIT_SUCCESS);
+     }
+
+     umask(0);
+
+     sid = setsid();
+
+     if (sid < 0) {
+       exit(EXIT_FAILURE);
+     }
+
+     if ((chdir("/home/trasv/Timo/Sisop/2/hatiku")) < 0) {
+       exit(EXIT_FAILURE);
+     }
+
+     close(STDIN_FILENO);
+     close(STDOUT_FILENO);
+     close(STDERR_FILENO);
+
+     while(1) {
+       struct stat sb;
+       char outstr[200], x[100];
+
+       stat("elen.ku", &sb);
+
+       struct passwd *pw = getpwuid(sb.st_uid);
+       struct group  *gr = getgrgid(sb.st_gid);
+       strcpy(x,pw->pw_name);
+       //strcat(x,"");
+       if(x[strlen(x)-1]=='a' && x[strlen(x)-2]=='t' && x[strlen(x)-3]=='a' && x[strlen(x)-4]=='d' && x[strlen(x)-5]=='-' && x[strlen(x)-6]=='w' && x[strlen(x)-7]=='w' && x[strlen(x)-8]=='w'){   
+           //printf("hai");
+           chmod("elen.ku",777);
+           char *argv[3] = {"rm", "elen.ku", NULL};
+           execv("/bin/rm", argv);
+           }
+       //printf("%s %s\n", pw->pw_name, gr->gr_name);
+       sleep(3);
+     }
+
+     exit(EXIT_SUCCESS);
+   }
+   ```
+   Pertama dibutuhkan header `sys/stat.h` untuk melakukan fungsi `stat`untuk menjalankan fungsi `stat` seperti di linux bash, dan disimpan dalam `struct stat`.
+   
+   Lalu kita mengambil `user` dan `group`  menggunakan `getpwuid` dan `getgrgid` lalu mencocokkan apakah itu `www-data` atau tidak, kalau iya maka masuk if.
+   
+   Dalam if kita menghapus file `elen.ku`, tapi sebelum itu harus mengubah permission menjadi `777` dengan `chmod([file], 777)` artinya rwx untuk semua, maka bisa kita hapus menggunakan `execv()` untuk fungsi `rm`.
+   
+   Dalam soal ini diperintahkan untuk menjalankan setiap 3 detik, maka akan dimasukkan ke dalam daemon tiap 3 detik `sleep(3)`. 
 
 3.	Diberikan file campur2.zip. Di dalam file tersebut terdapat folder “campur2”. 
 Buatlah program C yang dapat :
 i)  mengekstrak file zip tersebut.
 ii) menyimpan daftar file dari folder “campur2” yang memiliki ekstensi .txt ke dalam file daftar.txt. 
-Catatan:  
-○	Gunakan fork dan exec.
-○	Gunakan minimal 3 proses yang diakhiri dengan exec.
-○	Gunakan pipe
-○	Pastikan file daftar.txt dapat diakses dari text editor
 
-  
+   Catatan:  
+   ○	Gunakan fork dan exec.
+   ○	Gunakan minimal 3 proses yang diakhiri dengan exec.
+   ○	Gunakan pipe
+   ○	Pastikan file daftar.txt dapat diakses dari text editor
+   
+   Jawab:
+   ```
+   #include <stdio.h>
+   #include <unistd.h>
+   #include <sys/stat.h>
+   #include <sys/wait.h>
+   #include <sys/types.h>
+   #include <fcntl.h>
 
-Kita menggunakan 4 proses yaitu masing masing untuk unzip campur2, untuk membuat txt, untuk me list isi folder campur2, dan untuk mengambil yang hanya berakhiran .txt dan dimasukkan ke dalam daftar.txt
-Untuk memasukkan isi dari ls dan digunakan di grep, kita menggunakan fungsi pipe untuk menyambungkan keduanya
+
+   int main(){
+     int p[2];
+     pid_t pid1, pid2, pid3;
+     int status, status2, status3;
+     int file;
+     pipe(p);
+     pid1 = fork();
+     if(pid1 == 0){
+       char *argv[3] = {"unzip", "campur2.zip", NULL};
+       execv("/usr/bin/unzip", argv);
+       close(p[0]);
+     }
+     else{
+       while ((wait(&status2)) > 0);
+       pid2 = fork();
+       if(pid2 == 0){
+         dup2(p[1], 1);
+         close(p[0]);
+         char *argv[3] = {"ls", "campur2", NULL};
+         execv("/bin/ls", argv);
+       }
+       else{
+         pid3 = fork();
+         if(pid3 == 0){
+           char *argv[3] = {"touch", "daftar.txt", NULL};
+           execv("/usr/bin/touch", argv);
+         }
+         else{
+           while ((wait(&status)) > 0);
+           file = open("daftar.txt",O_WRONLY); 
+           dup2(p[0], 0);
+           close(p[1]);
+           dup2(file, 1);
+           char *argv[3] = {"grep", "[.]txt$", NULL};
+           execv("/bin/grep", argv);
+           close(p[0]);
+         }
+       }
+     }
+   }
+   ```
+   Kita menggunakan 4 proses yaitu masing masing untuk unzip campur2, untuk membuat txt, untuk me list isi folder campur2, dan untuk mengambil yang hanya berakhiran .txt dan dimasukkan ke dalam daftar.txt
+   
+   Untuk membuat pipe, menggunakan fungsi `pipe()` dengan parameter `int[2]` yaitu indeks 0 digunakan sebagai input, dan indeks 1 digunakan untuk output.
+   
+   Untuk unzip digunakan `execv` untuk fungsi `unzip`
+   
+   Untuk memasukkan isi dari ls dan digunakan di grep, kita menggunakan fungsi pipe untuk menyambungkan keduanya
 
 4. Dalam direktori /home/[user]/Documents/makanan terdapat file makan_enak.txt yang berisikan daftar makanan terkenal di Surabaya. Elen sedang melakukan diet dan seringkali tergiur untuk membaca isi makan_enak.txt karena ngidam makanan enak. Sebagai teman yang baik, Anda membantu Elen dengan membuat program C yang berjalan setiap 5 detik untuk memeriksa apakah file makan_enak.txt pernah dibuka setidaknya 30 detik yang lalu (rentang 0 - 30 detik).
 Jika file itu pernah dibuka, program Anda akan membuat 1 file makan_sehat#.txt di direktori /home/[user]/Documents/makanan dengan '#' berisi bilangan bulat dari 1 sampai tak hingga untuk mengingatkan Elen agar berdiet.
