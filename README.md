@@ -1,11 +1,15 @@
 # SoalShift_modul2_E13
 Soal Shift Modul 2 Praktikum Sistem Operasi
-1.	Elen mempunyai pekerjaan pada studio sebagai fotografer. Suatu hari ada seorang klien yang bernama Kusuma yang meminta untuk mengubah nama file yang memiliki ekstensi .png menjadi “[namafile]_grey.png”. Karena jumlah file yang diberikan Kusuma tidak manusiawi, maka Elen meminta bantuan kalian untuk membuat suatu program C yang dapat mengubah nama secara otomatis dan diletakkan pada direktori /home/[user]/modul2/gambar.
-Catatan : Tidak boleh menggunakan crontab.
 
-
-
-Pertama kita harus me-list isi dari folder dengan fungsi dir diatas, jika ada file maka akan masuk ke if, dalam while kita akan meloop untuk setiap file, untuk setiap file namanya dimasukkan ke string x, lalu dicek apakah file tersebut berakhiran .png, jika iya maka akan masuk ke if, lalu memasukkan nama file tersebut ke dalam string y, lalu akan dihapus 4 karakter terakhir, lalu ditambahkan _grey.png dibelakangnya, lalu menambahkan direktori ke depan nama file png tersebut agar muncul di direktori yang sudah ditentukan dengan menggunakan fungsi rename. Saat file didalam folder tersebut sudah habis, maka akan menutup dengan closedir.
+1. Elen mempunyai pekerjaan pada studio sebagai fotografer. Suatu hari ada seorang klien yang bernama Kusuma yang meminta untuk mengubah nama file yang memiliki ekstensi .png menjadi “[namafile]_grey.png”. Karena jumlah file yang diberikan Kusuma tidak manusiawi, maka Elen meminta bantuan kalian untuk membuat suatu program C yang dapat mengubah nama secara otomatis dan diletakkan pada direktori /home/[user]/modul2/gambar.
+   
+   Catatan : Tidak boleh menggunakan crontab.
+   
+   Jawab:
+   
+   Pertama kita harus membuat daftar isi dari folder dengan fungsi dir di atas, jika ada file maka akan masuk ke if.
+   
+   Dalam while kita akan meloop untuk setiap file, untuk setiap file namanya dimasukkan ke string x, lalu dicek apakah file tersebut berakhiran .png, jika iya maka akan masuk ke if, lalu memasukkan nama file tersebut ke dalam string y, lalu akan dihapus 4 karakter terakhir, lalu ditambahkan _grey.png dibelakangnya, lalu menambahkan direktori ke depan nama file png tersebut agar muncul di direktori yang sudah ditentukan dengan menggunakan fungsi rename. Saat file didalam folder tersebut sudah habis, maka akan menutup dengan closedir.
 Dalam soal perintahnya adalah untuk secara otomatis, maka menggunakan daemon di setiap detik (sleep(1))
   
  
@@ -37,18 +41,97 @@ Untuk memasukkan isi dari ls dan digunakan di grep, kita menggunakan fungsi pipe
 4. Dalam direktori /home/[user]/Documents/makanan terdapat file makan_enak.txt yang berisikan daftar makanan terkenal di Surabaya. Elen sedang melakukan diet dan seringkali tergiur untuk membaca isi makan_enak.txt karena ngidam makanan enak. Sebagai teman yang baik, Anda membantu Elen dengan membuat program C yang berjalan setiap 5 detik untuk memeriksa apakah file makan_enak.txt pernah dibuka setidaknya 30 detik yang lalu (rentang 0 - 30 detik).
 Jika file itu pernah dibuka, program Anda akan membuat 1 file makan_sehat#.txt di direktori /home/[user]/Documents/makanan dengan '#' berisi bilangan bulat dari 1 sampai tak hingga untuk mengingatkan Elen agar berdiet.
 
-Contoh:
-File makan_enak.txt terakhir dibuka pada detik ke-1
-Pada detik ke-10 terdapat file makan_sehat1.txt dan makan_sehat2.txt
+    Contoh:
+    File makan_enak.txt terakhir dibuka pada detik ke-1
+    Pada detik ke-10 terdapat file makan_sehat1.txt dan makan_sehat2.txt
 
-Catatan: 
+    Catatan: 
     • dilarang menggunakan crontab
     • Contoh nama file : makan_sehat1.txt, makan_sehat2.txt, dst
     
-Jawab:
-Di sini digunakan daemon untuk mengerjakan hal tersebut di background. Setelah seting daemon awal untuk daemon selesai, pertama kita ingin tahu access time, yaitu menggunakan struct stat dalam header sys/stat.h. Dari situ bisa dilakukan lstat dalam bahasa C untuk menghubungkannua ke sebuah file, dan masing-masing data waktu akses, modify, change bisa didapatkan, dan dilakukan strftime untuk format tanggal. Setelah itu kita juga mencari tahu waktu sekarang untuk membandingkan dengan struct tm dari time.h yang diisi parameter time_t, dan bisa diambil komponen waktu seperti jam, menit, detik dari struct tersebut.
+    Jawab:
 
-Berikutnya digunakan kondisional if untuk mengecek waktu rentang 30 detik dari access time terakhir. Dan jika memenuhi, dilakukan exec touch untuk membuat file makan_sehat#.txt
+    Metode yang kami gunakan adalah mencari access time dari file makan_enak.txt, mencari waktu local sekarang, dan membandingkan kedua waktu dengan operasi matematika untuk mengetahui selisih waktu akses file dan waktu sekarang apakah dalam rentang 30 detik. Jika dalam rentang 30 detik, maka akan membuat file kosong bernama makan_sehat#.txt
+    ```
+    Kode FUll disini
+    ```
+    Pertama dibuat folder makanan di `/home/anargya/Documents/` dan file makan_enak.txt dipindah ke sana. Lalu, dibuat variabel counter untuk memberi nama file nanti. Dan langsung dibuat judul file makan_sehat dalam array judul[].
+    ```
+    char judul[100], counter2[2];
+    strcpy(judul, "/home/anargya/Documents/makanan/makan_sehat");
+    snprintf(counter2, 10, "%d", counter);
+    strcat(judul, counter2);
+    strcat(judul, ".txt");
+    ```
+    Lalu untuk menjalankan fungsi `stat` di C, menggunakan header `sys/stat.h` dan membuat variabel bertipe `struct stat*`. Berikutnya digunakan `lstat` untuk menjalankan fungsi stat di C dari judul file tadi (parameter 2) dan hasilnya dimasukkan ke parameter 1 yaitu variabel struct stat* yang telah dibuat, seperti berikut.
+    ```
+    int errno;
+    const char* filename;
+    filename = "/home/anargya/Documents/makanan/makan_enak.txt";
+
+    errno = 0;
+    struct stat *file_info = malloc(sizeof(struct stat));
+    if (lstat(filename, file_info) != 0) {
+      perror("Error");
+      exit(1);
+    }
+    ```
+    Selanjutnya, masing-masing data seperti waktu akses, modify, change bisa didapatkan. Karena akan ada banyak data (bahkan untuk satu atribut access time sekalipun), digunakan fungsi strftime untuk membuat data `st_atime` dari struct tersebut (data access time) dibuat ke dalam format `jam:menit:detik` agar mudah digunakan nantinya, seperti ini.
+    ```
+    char timeakses[36];
+    strftime(timeakses, 36, "%H:%M:%S", localtime(&file_info->st_atime));
+    ```
+    Setelag itu kita ingin membagi data akses time ke masing-masing jam, menit, detik, dengan fungsi `strncpy` dan mengubahnya menjadi int untuk dapat dilakukan perhitungan, dengan menggunakan fungsi `atoi()`.
+    ```
+    Kode jammenitdetik
+    ```
+    Di sini kita sudah selesai mendapatkan access time yang siap dilakukan perhitungan. Untuk mendapatkan waktu saat ini, diperlukan header `time.h` dan dibuat variabel bertipe `struct tm*`. Untuk mendapatkan waktu sekarang dilakukan fungsi `time()` dan waktu sekarang akan disimpan dalam format detik sejak 1 January 1970 ke dalam parameter fungsi time() yaitu variabel bertipe time_t. Untuk menyimpan data tersebut ke dalam struct tm* yang sudah terdapat atribut seperti tm_hour, tm_min, dan tm_sec (untuk membagi data detik tersebut ke dalam berbagai format), digunakan fungsi `localtime()` yang parameternya diisi variabel bertipe `time_t*` atau alamat dari variabel bertipe `time_t` yaitu `&time_t`. Fungsi tersebut akan mereturn data bertipe `struct tm*` yang bisa kita masukkan ke dalam `struct tm* timeinfo` yang sudah kita buat. Berikutnya dibuat tiga variabel untuk menyimpan tm_hour, tm_min, tm_sec dari timeinfo (data langsung dalam format int sehingga tidak perlu diconvert). Seperti pada kode berikut.
+    ```
+    time_t rawtime;
+    struct tm * timeinfo;
+    time ( &rawtime );
+    timeinfo = localtime ( &rawtime );
+
+    int jam = timeinfo->tm_hour;
+    int menit = timeinfo->tm_min;
+    int detik = timeinfo->tm_sec;
+    ```
+    Lalu kita bisa menggunakan `free(fileinfo)` untuk membersihkan fileinfo dari memory karena sudah tidak diperlukan. Dan dilakukan perbandingan waktu akses dan waktu sekarang, diawali dari detik. Terdiri dari banyak syarat karena ada banyak kasus, ketika detik sekarang - detikakses < 0, harus meminjam waktu dari menit, ketika menit - 1 < 0 harus meminjam tambahan menit dari jam dan jam ditambah 23 (berlaku jika pada jam 00:00), dan syarat-syarat lainnya. Seperti di bawah ini.
+    ```
+    if (detik - detikakses2 >= 0) {
+      if (jam == jamakses2 && menit == menitakses2 && detik - detikakses2 <= 30) {
+        // Memenuhi syarat
+      }
+    } else if (detik - detikakses2 < 0) {
+      if (detik+60 - detikakses2 <= 30) {
+        if (menit-1 < 0) {
+          if (menit+59 == menitakses2) {
+            if (jam-1 < 0 && jam+23 == jamakses2) {
+              // Memenuhi syarat
+            } else if (jam-1 >= 0 && jam-1 == jamakses2) {
+              // Memenuhi syarat
+            }
+	        }
+        } else if (menit-1 == menitakses2) {
+          if (jam == jamakses2) {
+            // Memenuhi syarat
+          }
+        }
+      }
+    }
+    ```
+    Jika syarat memenuhi, maka siap dibuat file baru, dengan menggunakan `fork()`, tapi kita hanya memanfaatkan child saja, karena kita tidak ingin program ini berhenti ketika kita menggunakan exec di proses tanpa fork(). Dan dilakukan `execv` dari perintah touch dan nama file yang sudah dibuat di awal. Seperti berikut.
+    ```
+    pid_t child;
+    child = fork();
+    if (child == 0){
+      char *arr[3] = {"touch", judul, NULL};
+      execv("/usr/bin/touch", arr);
+    } else {
+      // Kosong
+    }
+    ```
+    Setelah program siap, tinggal dimasukkan ke dalam daemon dan dilakukan sleep setiap 5 detik dengan `sleep(5)`.
 
 5. Kerjakan poin a dan b di bawah:
     a. Buatlah program c untuk mencatat log setiap menit dari file log pada syslog ke /home/[user]/log/[dd:MM:yyyy-hh:mm]/log#.log
