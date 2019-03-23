@@ -53,7 +53,156 @@ Jika file itu pernah dibuka, program Anda akan membuat 1 file makan_sehat#.txt d
 
    Metode yang kami gunakan adalah mencari access time dari file makan_enak.txt, mencari waktu local sekarang, dan membandingkan kedua waktu dengan operasi matematika untuk mengetahui selisih waktu akses file dan waktu sekarang apakah dalam rentang 30 detik. Jika dalam rentang 30 detik, maka akan membuat file kosong bernama makan_sehat#.txt
    ```
-   Kode FUll disini
+   #include <sys/types.h>
+   #include <sys/stat.h>
+   #include <sys/wait.h>
+   #include <stdio.h>
+   #include <stdlib.h>
+   #include <fcntl.h>
+   #include <errno.h>
+   #include <unistd.h>
+   #include <syslog.h>
+   #include <string.h>
+   #include <time.h>
+
+   int main() {
+     int counter = 1;
+     pid_t pid, sid;
+     pid = fork();
+     if (pid < 0) {
+       exit(EXIT_FAILURE);
+     }
+     if (pid > 0) {
+       exit(EXIT_SUCCESS);
+     }
+     umask(0);
+     sid = setsid();
+     if (sid < 0) {
+       exit(EXIT_FAILURE);
+     }
+     if ((chdir("/home/anargya/Documents/makanan")) < 0) {
+       exit(EXIT_FAILURE);
+     }
+     close(STDIN_FILENO);
+     close(STDOUT_FILENO);
+     close(STDERR_FILENO);
+     while(1) {
+       char judul[100], counter2[2];
+       strcpy(judul, "/home/anargya/Documents/makanan/makan_sehat");
+       snprintf(counter2, 10, "%d", counter);
+       strcat(judul, counter2);
+       strcat(judul, ".txt");
+       //printf("%s\n", judul);
+
+       int errno;
+       const char* filename;
+       filename = "/home/anargya/Documents/makanan/makan_enak.txt";
+
+       errno = 0;
+       struct stat *file_info = malloc(sizeof(struct stat));
+       if (lstat(filename, file_info) != 0) {
+         perror("Error");
+         exit(1);
+       }
+
+       char timeakses[36];
+       strftime(timeakses, 36, "%H:%M:%S", localtime(&file_info->st_atime));
+       //printf("%s\n", timeakses);
+       free(file_info);
+
+       char jamakses[2];
+       strncpy(jamakses, timeakses, 2);
+       jamakses[2] = '\0';
+       int jamakses2 = atoi(jamakses);
+       //printf("%d\n", jamakses2);
+
+       char menitakses[2];
+       strncpy(menitakses, timeakses+3, 2);
+       menitakses[2] = '\0';
+       int menitakses2 = atoi(menitakses);
+       //printf("%d\n", menitakses2);
+
+       char detikakses[2];
+       strncpy(detikakses, timeakses+6, 2);
+       detikakses[2] = '\0';
+       int detikakses2 = atoi(detikakses);
+       //printf("%d\n", detikakses2);
+
+       time_t rawtime;
+       struct tm * timeinfo;
+       time ( &rawtime );
+       timeinfo = localtime ( &rawtime );
+
+       int jam = timeinfo->tm_hour;
+       int menit = timeinfo->tm_min;
+       int detik = timeinfo->tm_sec;
+
+       //printf("%d %d\n", jam, jamakses2);
+       //printf("%d %d\n", menit, menitakses2);
+       //printf("%d %d\n", detik, detikakses2);
+
+       if (detik - detikakses2 >= 0) {
+         if ((jam == jamakses2) && (menit == menitakses2) && ((detik - detikakses2) <= 30)) {
+      //printf("1\n");
+      counter++;
+           pid_t child;
+           child = fork();
+           if (child == 0){
+             char *arr[3] = {"touch", judul, NULL};
+             execv("/usr/bin/touch", arr);
+           } else {
+             //printf("Parent\n");
+           }
+         }
+       } else if (detik - detikakses2 < 0) {
+         if (detik+60 - detikakses2 <= 30) {
+           if (menit-1 < 0) {
+        if (menit+59 == menitakses2) {
+          if (jam-1 < 0 && jam+23 == jamakses2) {
+            //printf("2\n");
+            counter++;
+            pid_t child;
+                  child = fork();
+                  if (child == 0){
+                   char *arr[3] = {"touch", judul, NULL};
+                   execv("/usr/bin/touch", arr);
+                 } else {
+                   //printf("Parent\n");
+                  }
+          } else if (jam-1 >= 0 && jam-1 == jamakses2) {
+            //printf("3\n");
+            counter++;
+            pid_t child;
+                  child = fork();
+                  if (child == 0){
+                   char *arr[3] = {"touch", judul, NULL};
+                   execv("/usr/bin/touch", arr);
+                  } else {
+                   //printf("Parent\n");
+                  }
+          }
+        }
+           } else if (menit-1 == menitakses2) {
+        if (jam == jamakses2) {
+          //printf("4\n");
+          counter++;
+          pid_t child;
+               child = fork();
+                if (child == 0){
+                 char *arr[3] = {"touch", judul, NULL};
+                 execv("/usr/bin/touch", arr);
+                } else {
+                 //printf("Parent\n");
+                }
+        }
+           }
+         }
+       }
+
+       sleep(5);
+     }
+     exit(EXIT_SUCCESS);
+   }
    ```
    Pertama dibuat folder makanan di `/home/anargya/Documents/` dan file makan_enak.txt dipindah ke sana. Lalu, dibuat variabel counter untuk memberi nama file nanti. Dan langsung dibuat judul file makan_sehat dalam array judul[].
    ```
@@ -82,7 +231,20 @@ Jika file itu pernah dibuka, program Anda akan membuat 1 file makan_sehat#.txt d
    ```
    Setelah itu kita ingin membagi data akses time ke masing-masing jam, menit, detik, dengan fungsi `strncpy` dan mengubahnya menjadi int untuk dapat dilakukan perhitungan, dengan menggunakan fungsi `atoi()`.
    ```
-   Kode jammenitdetik
+   char jamakses[2];
+   strncpy(jamakses, timeakses, 2);
+   jamakses[2] = '\0';
+   int jamakses2 = atoi(jamakses);
+
+   char menitakses[2];
+   strncpy(menitakses, timeakses+3, 2);
+   menitakses[2] = '\0';
+   int menitakses2 = atoi(menitakses);
+
+   char detikakses[2];
+   strncpy(detikakses, timeakses+6, 2);
+   detikakses[2] = '\0';
+   int detikakses2 = atoi(detikakses);
    ```
    Di sini kita sudah selesai mendapatkan access time yang siap dilakukan perhitungan. Untuk mendapatkan waktu saat ini, diperlukan header `time.h` dan dibuat variabel bertipe `struct tm*`. Untuk mendapatkan waktu sekarang dilakukan fungsi `time()` dan waktu sekarang akan disimpan dalam format detik sejak 1 January 1970 ke dalam parameter fungsi time() yaitu variabel bertipe time_t. Untuk menyimpan data tersebut ke dalam struct tm* yang sudah terdapat atribut seperti tm_hour, tm_min, dan tm_sec (untuk membagi data detik tersebut ke dalam berbagai format), digunakan fungsi `localtime()` yang parameternya diisi variabel bertipe `time_t*` atau alamat dari variabel bertipe `time_t` yaitu `&time_t`. Fungsi tersebut akan mereturn data bertipe `struct tm*` yang bisa kita masukkan ke dalam `struct tm* timeinfo` yang sudah kita buat. Berikutnya dibuat tiga variabel untuk menyimpan tm_hour, tm_min, tm_sec dari timeinfo (data langsung dalam format int sehingga tidak perlu diconvert). Seperti pada kode berikut.
    ```
@@ -144,21 +306,212 @@ Jika file itu pernah dibuka, program Anda akan membuat 1 file makan_sehat#.txt d
    NB: Dilarang menggunakan crontab dan tidak memakai argumen ketika menjalankan program.
 
    Jawab:
+   
+   a. Mencatat log setiap menit ke file
    ```
-   Kode FULL di sini
+   #include <sys/types.h>
+   #include <sys/stat.h>
+   #include <sys/wait.h>
+   #include <stdio.h>
+   #include <stdlib.h>
+   #include <fcntl.h>
+   #include <errno.h>
+   #include <unistd.h>
+   #include <syslog.h>
+   #include <string.h>
+   #include <time.h>
+
+   int main() {
+     int counter = 0;
+     pid_t pid, sid;
+     pid = fork();
+     if (pid < 0) {
+       exit(EXIT_FAILURE);
+     }
+     if (pid > 0) {
+       exit(EXIT_SUCCESS);
+     }
+     umask(0);
+     sid = setsid();
+     if (sid < 0) {
+       exit(EXIT_FAILURE);
+     }
+     if ((chdir("/home/anargya/log")) < 0) {
+       exit(EXIT_FAILURE);
+     }
+     close(STDIN_FILENO);
+     close(STDOUT_FILENO);
+     close(STDERR_FILENO);
+     while(1) {
+       if (counter == 30) {
+         counter = 0;
+       }
+       counter++;
+
+       char judul[100];
+
+       time_t rawtime;
+       struct tm * timeinfo;
+       time ( &rawtime );
+       timeinfo = localtime ( &rawtime );
+
+       int jam = timeinfo->tm_hour;
+       char jam2[5];
+       snprintf(jam2, 10, "%d", jam);
+
+       int menit = timeinfo->tm_min;
+       char menit2[5];
+       snprintf(menit2, 10, "%d", menit);
+
+       if (counter == 1) {
+         int hari = timeinfo->tm_mday;
+         char hari2[5];
+         snprintf(hari2, 10, "%d", hari);
+
+         int bulan = timeinfo->tm_mon+1;
+         char bulan2[5];
+         snprintf(bulan2, 10, "%d", bulan);
+
+         int tahun = timeinfo->tm_year+1900;
+         char tahun2[5];
+         snprintf(tahun2, 10, "%d", tahun);
+
+         strcpy(judul, "/home/anargya/log/");
+         strcat(judul, hari2);
+         strcat(judul, ":");
+         strcat(judul, bulan2);
+         strcat(judul, ":");
+         strcat(judul, tahun2);
+         strcat(judul, "-");
+         strcat(judul, jam2);
+         strcat(judul, ":");
+         strcat(judul, menit2);
+
+         mkdir(judul, 0777);
+       }
+
+       char filelog[200];
+       char counter2[2];
+       snprintf(counter2, 10, "%d", counter);
+       strcpy(filelog, judul);
+       strcat(filelog, "/log");
+       strcat(filelog, counter2);
+       strcat(filelog, ".log");
+
+       char jammenit[6];
+       strcpy(jammenit, jam2);
+       strcat(jammenit, ":");
+       strcat(jammenit, menit2);
+
+       //sleep(60);
+
+       pid_t child;
+       child = fork();
+       if (child == 0){
+         //printf("%d Success\n", counter);
+         int out;
+         out = open(filelog, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
+
+         dup2(out, 1);
+         close(out);
+
+         char *arr[4] = {"grep", jammenit, "/var/log/syslog", NULL};
+         execv("/bin/grep", arr);
+       } else {
+         //printf("Parent\n");
+       }
+
+       sleep(60);
+     }
+     exit(EXIT_SUCCESS);
+   }
    ```
    Metode yang kami gunakan adalah menyiapkan judul dari folder dan file, menggunakan counter untuk menghitung menit ke berapa, menggunakan fungsi grep untuk mendapatkan data dari syslog khusus pada menit dan jam saat itu, dan melakukan redirection untuk membuat sekaligus menyimpan data dari grep ke dalam judul file yang sudah disiapkan.
    
-   Pertama dibuat variabel counter untuk menghitung menit ke berapa dan pembuatan judul filelog, dan langsung dilakukan pengecekan di awal apakah counter == 30, jika ya maka counter direset ke 0 (karena akan dibuat folder baru, sehingga judul filelog akan dibuat dari 1 lagi).
-   
-   Lalu akan dicari waktu sekarang menggunakan `struct tm*` dan fungsi `time()` yang disimpan ke variabel bertipe `time_t` dan dilakukan fungsi `localtime()` dengan parameter alamat dari variabel time_t dan mereturn data yang dimasukkan ke variabel struct tm* (sama seperti no. 4).
+   Pertama dibuat variabel counter untuk menghitung menit ke berapa dan pembuatan judul filelog, dan langsung dilakukan pengecekan di awal apakah counter == 30, jika ya maka counter direset ke 0 (karena akan dibuat folder baru, sehingga judul filelog akan dibuat dari 1 lagi). Seperti berikut.
+   ```
+   if (counter == 30) {
+      counter = 0;
+    }
+    counter++;
+   ```
+   Lalu akan dicari waktu sekarang menggunakan `struct tm*` dan fungsi `time()` yang disimpan ke variabel bertipe `time_t` dan dilakukan fungsi `localtime()` dengan parameter alamat dari variabel time_t dan mereturn data yang dimasukkan ke variabel struct tm* (sama seperti no. 4). Seperti berikut.
    
    Berikutnya didapatkan waktu sekarang masing-masing sesuai atribut timeinfo, dan akan diubah formatnya ke string menggunakan `snprintf` karena kita akan memakai ini untuk judul file yang digabung dengan atribut waktu yang lain. Untuk hari, bulan, dan tahun hanya diambil dan dirubah formatnya pada saat counter == 1 (setelah counter direset) karena hanya dibutuhkan setiap 30 menit sekali untuk membuat judul folder.
    
-   Untuk membuat folder, juga dicek apakah counter == 1 yang artinya sudah 30 menit. Jika iya, maka dibuat folder dengan fungsi `mkdir([judul_folder], 0777)` dengan parameter 0777 agar bisa dilakukan read, write, dsb.
-   
-   Berikutnya, kita membuat judul filelog dengan cara yang hampir sama, memanfaatkan header `string.h` untuk melakukan fungsi `strcpy` dan `strcat`, dan `jammenit` yang digunakan saat menjalankan fungsi `grep`
-   
+   Untuk membuat folder, juga dicek apakah counter == 1 yang artinya sudah 30 menit. Jika iya, maka dibuat folder dengan fungsi `mkdir([judul_folder], 0777)` dengan parameter 0777 agar bisa dilakukan read, write, dsb. Seperti berikut.
+   ```
+   time_t rawtime;
+   struct tm * timeinfo;
+   time ( &rawtime );
+   timeinfo = localtime ( &rawtime );
+
+   int jam = timeinfo->tm_hour;
+   char jam2[5];
+   snprintf(jam2, 10, "%d", jam);
+
+   int menit = timeinfo->tm_min;
+   char menit2[5];
+   snprintf(menit2, 10, "%d", menit);
+
+   if (counter == 1) {
+     int hari = timeinfo->tm_mday;
+     char hari2[5];
+     snprintf(hari2, 10, "%d", hari);
+
+     int bulan = timeinfo->tm_mon+1;
+     char bulan2[5];
+     snprintf(bulan2, 10, "%d", bulan);
+
+     int tahun = timeinfo->tm_year+1900;
+     char tahun2[5];
+     snprintf(tahun2, 10, "%d", tahun);
+
+     strcpy(judul, "/home/anargya/log/");
+     strcat(judul, hari2);
+     strcat(judul, ":");
+     strcat(judul, bulan2);
+     strcat(judul, ":");
+     strcat(judul, tahun2);
+     strcat(judul, "-");
+     strcat(judul, jam2);
+     strcat(judul, ":");
+     strcat(judul, menit2);
+
+     mkdir(judul, 0777);
+   }
+   ```
+   Berikutnya, kita membuat judul filelog dengan cara yang hampir sama, memanfaatkan header `string.h` untuk melakukan fungsi `strcpy` dan `strcat`, dan `jammenit` yang digunakan saat menjalankan fungsi `grep`. Seperti berikut.
+   ```
+   char filelog[200];
+   char counter2[2];
+   snprintf(counter2, 10, "%d", counter);
+   strcpy(filelog, judul);
+   strcat(filelog, "/log");
+   strcat(filelog, counter2);
+   strcat(filelog, ".log");
+
+   char jammenit[6];
+   strcpy(jammenit, jam2);
+   strcat(jammenit, ":");
+   strcat(jammenit, menit2);
+   ```
    Setelah semuanya siap, dilakukan `fork()` dan di salah satu proses dilakukan `grep` dan `redirection`. Dalam C, redirection digunakan dengan merubah `STDOUT` dari proses agar output masuk ke file dengan fungsi `dup2([file], 1)`, 1 menandakan output atau STDOUT. Sebelum itu, file dalam parameter tersebut dibuka dengan fungsi `open()` dengan tambahan perintah tertentu di dalamnya dan disimpan di variabel int, dan file tadi bisa kita tutup dengan `close()`.
-   
+   ```
+   pid_t child;
+   child = fork();
+   if (child == 0){
+     //printf("%d Success\n", counter);
+     int out;
+     out = open(filelog, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
+
+     dup2(out, 1);
+     close(out);
+
+     char *arr[4] = {"grep", jammenit, "/var/log/syslog", NULL};
+     execv("/bin/grep", arr);
+   } else {
+     //printf("Parent\n");
+   }
+   ```
    Setelah siap, dijalankan fungsi `grep` dengan `execv`, dan dilakukan `sleep(60)` untuk menjalankan program setiap 1 menit.
