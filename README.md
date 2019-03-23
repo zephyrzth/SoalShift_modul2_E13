@@ -81,7 +81,7 @@ Soal Shift Modul 2 Praktikum Sistem Operasi
    
    Dalam soal perintahnya adalah untuk secara otomatis, maka menggunakan daemon di setiap detik `sleep(1)`.
 
-2.	Pada suatu hari Kusuma dicampakkan oleh Elen karena Elen dimenangkan oleh orang lain. Semua kenangan tentang Elen berada pada file bernama “elen.ku” pada direktori “hatiku”. Karena sedih berkepanjangan, tugas kalian sebagai teman Kusuma adalah membantunya untuk menghapus semua kenangan tentang Elen dengan membuat program C yang bisa mendeteksi owner dan group dan menghapus file “elen.ku” setiap 3 detik dengan syarat ketika owner dan grupnya menjadi “www-data”. Ternyata kamu memiliki kendala karena permission pada file “elen.ku”. Jadi, ubahlah permissionnya menjadi 777. Setelah kenangan tentang Elen terhapus, maka Kusuma bisa move on.
+2. Pada suatu hari Kusuma dicampakkan oleh Elen karena Elen dimenangkan oleh orang lain. Semua kenangan tentang Elen berada pada file bernama “elen.ku” pada direktori “hatiku”. Karena sedih berkepanjangan, tugas kalian sebagai teman Kusuma adalah membantunya untuk menghapus semua kenangan tentang Elen dengan membuat program C yang bisa mendeteksi owner dan group dan menghapus file “elen.ku” setiap 3 detik dengan syarat ketika owner dan grupnya menjadi “www-data”. Ternyata kamu memiliki kendala karena permission pada file “elen.ku”. Jadi, ubahlah permissionnya menjadi 777. Setelah kenangan tentang Elen terhapus, maka Kusuma bisa move on.
 
    Catatan: Tidak boleh menggunakan crontab
    
@@ -160,7 +160,7 @@ Soal Shift Modul 2 Praktikum Sistem Operasi
    
    Dalam soal ini diperintahkan untuk menjalankan setiap 3 detik, maka akan dimasukkan ke dalam daemon tiap 3 detik `sleep(3)`. 
 
-3.	Diberikan file campur2.zip. Di dalam file tersebut terdapat folder “campur2”. 
+3. Diberikan file campur2.zip. Di dalam file tersebut terdapat folder “campur2”. 
 Buatlah program C yang dapat :
 i)  mengekstrak file zip tersebut.
 ii) menyimpan daftar file dari folder “campur2” yang memiliki ekstensi .txt ke dalam file daftar.txt. 
@@ -222,13 +222,21 @@ ii) menyimpan daftar file dari folder “campur2” yang memiliki ekstensi .txt 
      }
    }
    ```
-   Kita menggunakan 4 proses yaitu masing masing untuk unzip campur2, untuk membuat txt, untuk me list isi folder campur2, dan untuk mengambil yang hanya berakhiran .txt dan dimasukkan ke dalam daftar.txt
+   Kita menggunakan 4 proses yaitu masing masing untuk unzip campur2, untuk membuat txt, untuk me-list isi folder campur2, dan untuk mengambil yang hanya berakhiran .txt dan dimasukkan ke dalam daftar.txt
    
    Untuk membuat pipe, menggunakan fungsi `pipe()` dengan parameter `int[2]` yaitu indeks 0 digunakan sebagai input, dan indeks 1 digunakan untuk output.
    
-   Untuk unzip digunakan `execv` untuk fungsi `unzip`
+   Untuk unzip digunakan `execv` untuk fungsi `unzip`.
    
-   Untuk memasukkan isi dari ls dan digunakan di grep, kita menggunakan fungsi pipe untuk menyambungkan keduanya
+   Untuk membuat txt juga dengan `touch` dengan `execv`.
+   
+   Untuk me-list isi folder campur2 digunakan fungsi `ls campur2` yang dimasukkan dalam fungsi `execv`.
+   
+   Untuk mengambil yang berakhiran .txt juga menggunakan `grep .txt$` di dalam `execv`, bedanya di sini digunakan redirection dalam C dengan mengubah STDOUT dari proses untuk grep ini dengan file yang sudah dibuka dengan `open()`.
+   
+   Dalam kasus ini, pipe digunakan saat melakukan fungsi `ls` dan `grep`. Jadi pertama dalam proses untuk menjalankan `ls`, `STDOUT` diganti dengan `p[1]` dengan `dup2(p[1], 1)` sehingga output dari proses ini akan masuk ke `p[1]` yang berperan sebagai pipe. Sedangkan di proses `grep`, `STDIN` dan `STDOUT`nya diganti karena kita akan merubah input dan output untuk proses ini, dimana input bersumber dari pipe `p[0]` untuk input yang dilakukan dengan `dup2(p[0], 0)` dan `dup2(file, 1)`.
+   
+   Dalam program ini juga harus ada urutan penjalanan proses, yang diatur dengan fungsi `wait()`. proses `grep` harus menunggu proses `touch` jadi, dan proses `ls` harus menunggu `campur2.zip` selesai diextract.
 
 4. Dalam direktori /home/[user]/Documents/makanan terdapat file makan_enak.txt yang berisikan daftar makanan terkenal di Surabaya. Elen sedang melakukan diet dan seringkali tergiur untuk membaca isi makan_enak.txt karena ngidam makanan enak. Sebagai teman yang baik, Anda membantu Elen dengan membuat program C yang berjalan setiap 5 detik untuk memeriksa apakah file makan_enak.txt pernah dibuka setidaknya 30 detik yang lalu (rentang 0 - 30 detik).
 Jika file itu pernah dibuka, program Anda akan membuat 1 file makan_sehat#.txt di direktori /home/[user]/Documents/makanan dengan '#' berisi bilangan bulat dari 1 sampai tak hingga untuk mengingatkan Elen agar berdiet.
